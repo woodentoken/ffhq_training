@@ -124,7 +124,7 @@ def main(type_run='sample', resolution=(128, 128)):
 
     train_data, validation_data, test_data = split_data(data, split_ratios =(0.8, 0.01, 0.18));
 
-    transform = transforms.Compose([                      # Convert tensor to PIL image
+    transform = transforms.Compose([
         transforms.ToTensor(),                          # Convert image to tensor
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalize image
     ])
