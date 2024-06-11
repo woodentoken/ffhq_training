@@ -1,6 +1,6 @@
 from torch.utils.data import Dataset
 import os
-from PIL import Image
+from PIL import Image, ImageFilter
 import torch
 import torch
 import os
@@ -14,11 +14,15 @@ class FFHQDataset(Dataset):
 
     def __len__(self):
         return len(self.image_paths)
+    
+    def motion_blur(self, image, degree):
+        return image.filter(ImageFilter.GaussianBlur(degree))
 
     def __getitem__(self, idx):
         img_path = self.image_paths[idx]
         img_path = os.getcwd() + img_path
         image = Image.open(img_path).convert('RGB')
+        image = self.motion_blur(image, 5)
         if self.transform:
             image = self.transform(image)
         if self.attributes is not None:
