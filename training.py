@@ -8,6 +8,7 @@ import pandas as pd
 import os
 import FFHQDataset
 from torch.utils.data import DataLoader
+from copy import deepcopy
 
 def split_data(data_set, split_ratios=(0.8, 0.1, 0.1)):
     #pudb.set_trace()
@@ -25,9 +26,6 @@ def subset_data(data_set, subset_size=0):
 # Training loop
 def train_model(model, dataloader, num_epochs=1, save=True):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    num_features = model.fc.in_features
-    model.fc = nn.Linear(num_features, 9)  # Assuming 9 classes
-    #model.fc2 = nn.Linear(num_features, 9)  # Emotion prediction
 
     # Define loss function and optimizer
     numeric_criterion = nn.MSELoss()  # Mean Squared Error
@@ -95,7 +93,6 @@ def main(type_run='sample'):
     attributes = data.drop(columns=['image_path'])
 
     train_data, validation_data, test_data = split_data(data, split_ratios =(0.8, 0.1, 0.1));
-    print(train_data)
 
     transform = transforms.Compose([                      # Convert tensor to PIL image
         transforms.ToTensor(),                          # Convert image to tensor
@@ -110,13 +107,20 @@ def main(type_run='sample'):
     test_loader = DataLoader(test_dataset, batch_size=5, shuffle=False)
     
     untrained_model = torchvision.models.resnet50(weights=None)
-    trained_model = train_model(
-        untrained_model, 
-        train_dataloader, 
-        num_epochs=3, 
-        save=True)
-    
-    eval(trained_model, test_loader)
+    num_features = untrained_model.fc.in_features
+    untrained_model.fc = nn.Linear(num_features, 9)  # Assuming 9 classes
+    # if model.pth exists, load the model
+    if os.path.exists('model.pth'):
+        untrained_model.load_state_dict(torch.load('model.pth'))
+        trained_model = deepcopy(untrained_model)
+    else:
+        trained_model = train_model(
+            untrained_model, 
+            train_dataloader, 
+            num_epochs=3, 
+            save=True)
+
+    eval(trained_model, validation_loader)
             
 if __name__ == '__main__':
     main('data')

@@ -11,7 +11,6 @@ class FFHQDataset(Dataset):
         self.attributes = dataframe.drop(columns=['image_path', 'age'])
         self.dataset_path = dataset_path
         self.transform = transform
-        print(dataset_path)
 
     def __len__(self):
         return len(self.image_paths)
