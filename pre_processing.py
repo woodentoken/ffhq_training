@@ -50,24 +50,38 @@ def process_json(json_path):
     json_dict = {
         'image id': image_id_list,
         'age': image_age_list,
-        'gender': image_gender_list
+        'gender': image_gender_list,
         }
     
     # for each entry in emotion list, get the key and add it to the json_dict
     emotion_keys = set([key for emotion in image_emotion_list for key in emotion.keys()])
     
-    # create a list of lists for each emotion key
-    for key in sorted(emotion_keys):
-        json_dict[key] = [emotion[key] for emotion in image_emotion_list]
+    # add the values in the negative_keys to the json_dict
+    # sum the values in the negative keys and add to the json dict as a new key
+    #json_dict['negative'] += [emotion[key] for emotion in negative_keys]
         
     attribute_df = pd.DataFrame(json_dict)
     attribute_df.sort_values(by='image id', inplace=True)
     attribute_df.set_index('image id', inplace=True)
     attribute_df['gender'] = attribute_df['gender'].map({'male': 0.0, 'female': 1.0})
+    attribute_df.rename(columns={'gender': 'female'}, inplace=True)
     
     # plot the sum of each of the keys in the emotion dictionary
     emotion_df = pd.DataFrame(image_emotion_list)
-    print(emotion_df.sum())
+    negative_keys = ['sadness', 'contempt', 'disgust', 'fear', 'anger', 'surprise']
+    emotion_df['negative'] = emotion_df[negative_keys].sum(axis=1)
+    emotion_df.drop(columns=negative_keys, inplace=True)
+    emotion_df['image_id'] = image_id_list
+    emotion_df.set_index('image_id', inplace=True)
+    emotion_df.rename(columns={'happiness': 'positive'}, inplace=True)
+    
+    # create a list of lists for each emotion key
+    print(emotion_keys)
+    for key in sorted(emotion_keys):
+        json_dict[key] = [emotion[key] for emotion in image_emotion_list]
+        
+    # joing attribute df and emotion df
+    attribute_df = attribute_df.join(emotion_df, on='image id')
     
     return attribute_df
 
